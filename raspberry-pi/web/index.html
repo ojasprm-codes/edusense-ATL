@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EDUSENSE AI — Classroom air quality and ventilation monitoring">
+  <title>EDUSENSE AI | Classroom Air Quality Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='7.2.0') }}">
+  <script src="{{ url_for('static', filename='vendor/chart.umd.min.js', v='4.4.1') }}" defer></script>
+  <script src="{{ url_for('static', filename='script.js', v='7.2.0') }}" defer></script>
+  <script src="{{ url_for('static', filename='export_ui.js', v='7.2.0') }}" defer></script>
+</head>
+<body>
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow--left" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow--right" aria-hidden="true"></div>
+
+  <section id="bootScreen" class="boot-screen" aria-live="polite">
+    <div class="boot-card glass-panel">
+      <div class="boot-card__brand">
+        <div class="boot-card__mark" aria-hidden="true"></div>
+        <div>
+          <h1>EDUSENSE AI V7</h1>
+          <p>Classroom Air Quality Monitor</p>
+        </div>
+      </div>
+      <div class="boot-card__time">
+        <span id="bootCurrentTime">--:--:--</span>
+        <small>Current Time</small>
+      </div>
+      <div class="boot-progress">
+        <div class="progress-ring" style="--progress: 0">
+          <span id="bootProgressText">0%</span>
+        </div>
+        <div class="boot-progress__meta">
+          <div><span>Boot Started</span><strong id="bootStarted">--:--:--</strong></div>
+          <div><span>Estimated Completion</span><strong id="bootEta">--:--:--</strong></div>
+          <div><span>Elapsed Time</span><strong id="bootElapsed">0s</strong></div>
+          <div><span>Remaining</span><strong id="bootRemaining">--s</strong></div>
+        </div>
+      </div>
+      <div class="boot-bar"><div id="bootBarFill" class="boot-bar__fill"></div></div>
+      <ol id="bootTimeline" class="boot-timeline"></ol>
+    </div>
+  </section>
+
+  <div class="app">
+    <!-- Header -->
+    <header class="header glass-panel fade-in">
+      <div class="header__brand">
+        <div class="header__logo" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="22" stroke="url(#logoGrad)" stroke-width="2"/>
+            <path d="M24 8v8M24 32v8M8 24h8M32 24h8" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="24" r="6" fill="#00E5FF" opacity="0.3"/>
+            <circle cx="24" cy="24" r="3" fill="#00E5FF"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="48" y2="48">
+                <stop stop-color="#00E5FF"/>
+                <stop offset="1" stop-color="#0099FF"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="header__text">
+          <h1 class="header__title">EDUSENSE <span class="accent">AI</span> V7</h1>
+          <p class="header__subtitle">Classroom Air Quality and Ventilation Monitor</p>
+        </div>
+      </div>
+      <div class="header__clock">
+        <time id="liveClock" class="header__time" datetime="">00:00:00</time>
+        <time id="liveDate" class="header__date" datetime="">Loading...</time>
+      </div>
+    </header>
+
+    <!-- Status Bar -->
+    <section class="status-bar glass-panel fade-in fade-in--delay-1" aria-label="System status overview">
+      <div class="status-bar__item">
+        <span class="status-bar__label">Overall Status</span>
+        <span id="status" class="status-badge status-badge--safe" role="status">SAFE</span>
+      </div>
+      <div class="status-bar__divider" aria-hidden="true"></div>
+      <div class="status-bar__item">
+        <span class="status-bar__label">Raspberry Pi</span>
+        <span id="piConnection" class="connection-dot connection-dot--online">
+          <span class="connection-dot__pulse"></span>
+          <span class="connection-dot__label">Connected</span>
+        </span>
+      </div>
+      <div class="status-bar__divider" aria-hidden="true"></div>
+      <div class="status-bar__item">
+        <span class="status-bar__label">Web Dashboard</span>
+        <span id="webConnection" class="connection-dot connection-dot--online">
+          <span class="connection-dot__pulse"></span>
+          <span class="connection-dot__label">Online</span>
+        </span>
+      </div>
+      <div class="status-bar__divider" aria-hidden="true"></div>
+      <div class="status-bar__item">
+        <span class="status-bar__label">Arduino</span>
+        <span id="arduinoConnection" class="connection-dot connection-dot--online">
+          <span class="connection-dot__pulse"></span>
+          <span class="connection-dot__label">Connected</span>
+        </span>
+      </div>
+      <div class="status-bar__divider" aria-hidden="true"></div>
+      <div class="status-bar__item">
+        <span class="status-bar__label">Last Update</span>
+        <time id="lastUpdate" class="status-bar__value">--:--:--</time>
+      </div>
+    </section>
+
+    <!-- Sensor Grid -->
+    <section class="sensor-grid" aria-label="Environmental sensor readings">
+      <!-- Temperature -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-2" data-sensor="temp">
+        <div class="sensor-card__icon sensor-card__icon--temp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2a2 2 0 0 0-2 2v10.5a4 4 0 1 0 4 0V4a2 2 0 0 0-2-2z"/>
+            <line x1="12" y1="18" x2="12" y2="20"/>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">Temperature</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="temp" class="sensor-card__value" data-target="0">0.0</span>
+          <span class="sensor-card__unit">°C</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Normal</span>
+        </div>
+      </article>
+
+      <!-- Humidity -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-2" data-sensor="hum">
+        <div class="sensor-card__icon sensor-card__icon--hum">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">Humidity</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="hum" class="sensor-card__value" data-target="0">0.0</span>
+          <span class="sensor-card__unit">%</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Normal</span>
+        </div>
+      </article>
+
+      <!-- MQ-2 Smoke -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-3" data-sensor="mq2">
+        <div class="sensor-card__icon sensor-card__icon--gas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 18c0-2 1-3 3-3s3 1 3 3"/>
+            <path d="M12 2c0 4-2 6-4 8"/>
+            <path d="M16 2c0 4 2 6 4 8"/>
+            <path d="M10 15h4"/>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">MQ-2 Smoke</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="mq2" class="sensor-card__value" data-target="0">0</span>
+          <span class="sensor-card__unit">ppm est.</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Clear</span>
+        </div>
+      </article>
+
+      <!-- MQ-3 Alcohol -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-3" data-sensor="mq3">
+        <div class="sensor-card__icon sensor-card__icon--gas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 3h6v4H9z"/>
+            <path d="M10 7v14M14 7v14"/>
+            <path d="M8 21h8"/>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">MQ-3 Alcohol</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="mq3" class="sensor-card__value" data-target="0">0</span>
+          <span class="sensor-card__unit">ppm est.</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Clear</span>
+        </div>
+      </article>
+
+      <!-- MQ-4 Methane -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-4" data-sensor="mq4">
+        <div class="sensor-card__icon sensor-card__icon--gas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="3"/>
+            <circle cx="6" cy="8" r="2"/>
+            <circle cx="18" cy="8" r="2"/>
+            <circle cx="6" cy="16" r="2"/>
+            <circle cx="18" cy="16" r="2"/>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">MQ-4 Methane</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="mq4" class="sensor-card__value" data-target="0">0</span>
+          <span class="sensor-card__unit">ppm est.</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Clear</span>
+        </div>
+      </article>
+
+      <!-- MQ-5 LPG -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-4" data-sensor="mq5">
+        <div class="sensor-card__icon sensor-card__icon--gas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2v20"/>
+            <path d="M8 6h8"/>
+            <path d="M7 12h10"/>
+            <path d="M8 18h8"/>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">MQ-5 LPG</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="mq5" class="sensor-card__value" data-target="0">0</span>
+          <span class="sensor-card__unit">ppm est.</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Clear</span>
+        </div>
+      </article>
+
+      <!-- MQ-7 Carbon Monoxide -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-5" data-sensor="mq7">
+        <div class="sensor-card__icon sensor-card__icon--gas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <text x="12" y="16" text-anchor="middle" fill="currentColor" font-size="8" stroke="none">CO</text>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">MQ-7 Carbon Monoxide</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="mq7" class="sensor-card__value" data-target="0">0</span>
+          <span class="sensor-card__unit">ppm est.</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Clear</span>
+        </div>
+      </article>
+
+      <!-- MQ-8 Hydrogen -->
+      <article class="sensor-card glass-panel fade-in fade-in--delay-5" data-sensor="mq8">
+        <div class="sensor-card__icon sensor-card__icon--gas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <text x="12" y="16" text-anchor="middle" fill="currentColor" font-size="8" stroke="none">H₂</text>
+          </svg>
+        </div>
+        <h2 class="sensor-card__name">MQ-8 Hydrogen</h2>
+        <div class="sensor-card__value-wrap">
+          <span id="mq8" class="sensor-card__value" data-target="0">0</span>
+          <span class="sensor-card__unit">ppm est.</span>
+        </div>
+        <div class="sensor-card__status">
+          <span class="status-indicator status-indicator--safe"></span>
+          <span class="sensor-card__status-text">Clear</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- Analytics + Side Panels -->
+    <div class="main-panels">
+      <!-- Live Chart -->
+      <section class="chart-panel glass-panel fade-in fade-in--delay-6" aria-label="Live environment analytics">
+        <div class="panel-header">
+          <h2 class="panel-header__title">
+            <svg class="panel-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Live Environment Analytics
+          </h2>
+          <div class="chart-legend">
+            <span class="chart-legend__item"><span class="chart-legend__dot chart-legend__dot--temp"></span>Temperature</span>
+            <span class="chart-legend__item"><span class="chart-legend__dot chart-legend__dot--hum"></span>Humidity</span>
+            <span class="chart-legend__item"><span class="chart-legend__dot chart-legend__dot--gas"></span>Estimated gas concentration (ppm)</span>
+          </div>
+        </div>
+        <div class="history-controls" aria-label="Chart history range">
+          <button class="history-controls__btn history-controls__btn--active" data-range="live" type="button">LIVE</button>
+          <button class="history-controls__btn" data-range="2h" type="button">2 HOURS</button>
+          <button class="history-controls__btn" data-range="5h" type="button">5 HOURS</button>
+          <button class="history-controls__btn" data-range="1d" type="button">1 DAY</button>
+          <button class="history-controls__btn" data-range="20d" type="button">20 DAYS</button>
+          <button class="history-controls__btn" data-range="2m" type="button">2 MONTHS</button>
+          <button class="history-controls__btn" data-range="today" type="button">TODAY</button>
+          <button class="history-controls__btn" data-range="yesterday" type="button">YESTERDAY</button>
+          <button id="calendarButton" class="history-controls__btn history-controls__btn--icon" data-range="calendar" type="button" aria-label="Open calendar history">
+            <svg class="history-controls__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+              <path d="M8 2v4M16 2v4M3 10h18"></path>
+            </svg>
+            CALENDAR
+          </button>
+          <button id="customRangeButton" class="history-controls__btn" data-range="custom" type="button">CUSTOM RANGE</button>
+          <button id="exportButton" class="history-controls__btn history-controls__btn--ghost" type="button">EXPORT</button>
+        </div>
+        <div class="chart-sensor-selector" aria-label="Sensor graph selector">
+          <button class="chart-sensor-selector__btn chart-sensor-selector__btn--active" data-chart-sensor="gas" type="button">AVG</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="temp" type="button">TEMP</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="hum" type="button">HUMIDITY</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="mq2" type="button">SMOKE</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="mq3" type="button">ALCOHOL</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="mq4" type="button">METHANE</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="mq5" type="button">LPG</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="mq7" type="button">CO</button>
+          <button class="chart-sensor-selector__btn" data-chart-sensor="mq8" type="button">HYDROGEN</button>
+        </div>
+        <div id="dateHistoryPanel" class="date-history-panel" aria-label="Calendar history controls">
+          <button id="previousDayButton" class="history-controls__btn" type="button">&lt; PREVIOUS DAY</button>
+          <strong id="selectedDateLabel" class="date-history-panel__date">Today</strong>
+          <button id="nextDayButton" class="history-controls__btn" type="button">NEXT DAY &gt;</button>
+          <input id="historyDateInput" class="date-history-panel__input" type="date">
+          <select id="dayWindowSelect" class="date-history-panel__select" aria-label="Selected day time window">
+            <option value="24">FULL DAY</option>
+            <option value="2">FIRST 2 HOURS</option>
+            <option value="10">FIRST 10 HOURS</option>
+            <option value="18">FIRST 18 HOURS</option>
+            <option value="24">ENTIRE 24 HOURS</option>
+          </select>
+          <label class="date-history-panel__toggle">
+            <input id="midnightContextToggle" type="checkbox">
+            <span>30 min context</span>
+          </label>
+        </div>
+        <div id="customRangePanel" class="date-history-panel date-history-panel--compact" aria-label="Custom range controls">
+          <input id="customStartInput" class="date-history-panel__input" type="datetime-local">
+          <input id="customEndInput" class="date-history-panel__input" type="datetime-local">
+          <button id="applyCustomRangeButton" class="history-controls__btn" type="button">APPLY</button>
+        </div>
+        <div class="power-session-strip" aria-label="Power and storage history">
+          <div>
+            <span>Last Power Record</span>
+            <strong id="powerLastRecord">Loading...</strong>
+          </div>
+          <div>
+            <span>Stored Readings</span>
+            <strong id="powerStoredReadings">--</strong>
+          </div>
+          <div>
+            <span>Previous Shutdown</span>
+            <strong id="powerShutdownType">--</strong>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="envChart" aria-label="Environmental data chart"></canvas>
+          <div id="chartEmptyState" class="chart-empty-state">No data recorded for this range.</div>
+        </div>
+        <div class="chart-stat-strip" aria-label="Selected graph statistics">
+          <div class="analytics-tile"><span id="chartMetricLabel">Gas Average</span><strong id="chartMetricSamples">0 samples</strong></div>
+          <div class="analytics-tile"><span>Average</span><strong id="chartMetricAvg">--</strong></div>
+          <div class="analytics-tile"><span>Lowest</span><strong id="chartMetricMin">--</strong></div>
+          <div class="analytics-tile"><span>Highest</span><strong id="chartMetricMax">--</strong></div>
+        </div>
+        <div class="analytics-strip" aria-label="Selected range analytics">
+          <div class="analytics-tile"><span>Avg Temp</span><strong id="analyticsAvgTemp">--</strong></div>
+          <div class="analytics-tile"><span>Max Temp</span><strong id="analyticsMaxTemp">--</strong></div>
+          <div class="analytics-tile"><span>Avg Humidity</span><strong id="analyticsAvgHum">--</strong></div>
+          <div class="analytics-tile"><span>Warnings</span><strong id="analyticsWarnings">--</strong></div>
+          <div class="analytics-tile"><span>Dangers</span><strong id="analyticsDangers">--</strong></div>
+          <div class="analytics-tile"><span>Coverage</span><strong id="analyticsCoverage">--</strong></div>
+        </div>
+      </section>
+
+      <!-- Right Column -->
+      <div class="side-panels">
+        <!-- Monitoring guidance -->
+        <section class="ai-panel glass-panel glow-border fade-in fade-in--delay-7" aria-label="Monitoring guidance">
+          <div class="ai-panel__header">
+            <div class="ai-panel__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="20" stroke="url(#aiGrad)" stroke-width="1.5"/>
+                <path d="M16 28c2-4 6-6 8-6s6 2 8 6" stroke="#00E5FF" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="18" cy="20" r="2" fill="#00E5FF"/>
+                <circle cx="30" cy="20" r="2" fill="#00E5FF"/>
+                <path d="M24 8v4M24 36v4M8 24h4M36 24h4" stroke="#0099FF" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+                <defs>
+                  <linearGradient id="aiGrad" x1="0" y1="0" x2="48" y2="48">
+                    <stop stop-color="#00E5FF"/>
+                    <stop offset="1" stop-color="#0099FF"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h2 class="ai-panel__title">Monitoring Guidance</h2>
+          </div>
+          <p id="aiText" class="ai-panel__text">
+            Air quality is stable within the calibrated baseline.<br>
+            Maintain normal ventilation and continue monitoring.
+          </p>
+          <div class="ai-panel__actions">
+            <button id="generateAiReport" class="history-controls__btn" type="button">GENERATE RANGE REPORT</button>
+            <small id="aiSource">Safety engine online</small>
+          </div>
+          <div class="ai-panel__glow" aria-hidden="true"></div>
+        </section>
+
+        <!-- System Information -->
+        <section class="system-panel glass-panel fade-in fade-in--delay-8" aria-label="System information">
+          <div class="panel-header">
+            <h2 class="panel-header__title">
+              <svg class="panel-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+              System Information
+            </h2>
+          </div>
+          <p id="systemSummary" class="system-summary">
+            System telemetry is initializing. CPU, memory, storage, and connectivity will be summarized here.
+          </p>
+          <div class="system-grid">
+            <div class="system-item" data-system-metric="cpu_temp">
+              <span class="system-item__label">CPU Temperature</span>
+              <span id="cpuTemp" class="system-item__value">-- °C</span>
+              <div class="progress-bar"><div id="cpuTempBar" class="progress-bar__fill progress-bar__fill--temp" style="width: 0%"></div></div>
+            </div>
+            <div class="system-item" data-system-metric="cpu_usage">
+              <span class="system-item__label">CPU Usage</span>
+              <span id="cpuUsage" class="system-item__value">-- %</span>
+              <div class="progress-bar"><div id="cpuUsageBar" class="progress-bar__fill progress-bar__fill--cpu" style="width: 0%"></div></div>
+            </div>
+            <div class="system-item" data-system-metric="ram_usage">
+              <span class="system-item__label">RAM Usage</span>
+              <span id="ramUsage" class="system-item__value">-- %</span>
+              <div class="progress-bar"><div id="ramUsageBar" class="progress-bar__fill progress-bar__fill--ram" style="width: 0%"></div></div>
+            </div>
+            <div class="system-item" data-system-metric="disk_usage">
+              <span class="system-item__label">Disk Usage</span>
+              <span id="diskUsage" class="system-item__value">-- %</span>
+              <div class="progress-bar"><div id="diskUsageBar" class="progress-bar__fill progress-bar__fill--cpu" style="width: 0%"></div></div>
+            </div>
+            <div class="system-item system-item--inline">
+              <span class="system-item__label">WiFi Status</span>
+              <span id="wifiStatus" class="system-item__badge system-item__badge--online">Connected</span>
+            </div>
+            <div class="system-item system-item--inline">
+              <span class="system-item__label">Web Dashboard</span>
+              <span id="webStatus" class="system-item__badge system-item__badge--online">Online</span>
+            </div>
+            <div class="system-item system-item--inline">
+              <span class="system-item__label">Raspberry Pi</span>
+              <span id="piStatus" class="system-item__badge system-item__badge--online">Online</span>
+            </div>
+            <button id="eraseDatabaseButton" class="system-item system-item--danger" type="button">
+              <span class="system-item__label">Database</span>
+              <span class="system-item__value">Erase Details</span>
+            </button>
+            <button id="resetNetworkButton" class="system-item system-item--danger" type="button">
+              <span class="system-item__label">WiFi Network</span>
+              <span class="system-item__value">Reset Setup</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer glass-panel fade-in fade-in--delay-9">
+      <div class="footer__item">
+        <span class="footer__dot footer__dot--online"></span>
+        Arduino Connected
+      </div>
+      <div class="footer__item">
+        <span class="footer__dot footer__dot--online"></span>
+        Raspberry Pi Connected
+      </div>
+      <div class="footer__item">
+        <span class="footer__dot footer__dot--online"></span>
+        Flask Server Online
+      </div>
+      <div class="footer__version">Version EDUSENSE AI V7 Cloud</div>
+    </footer>
+  </div>
+
+  <section id="sensorModal" class="sensor-modal sensor-modal--hidden" aria-live="polite" aria-label="Solo sensor analytics">
+    <div class="sensor-modal__card glass-panel">
+      <button id="sensorModalClose" class="sensor-modal__close" type="button" aria-label="Close solo sensor analytics">×</button>
+      <div class="sensor-modal__header">
+        <div>
+          <span class="sensor-modal__eyebrow">SENSOR DETAILS</span>
+          <h2 id="soloSensorTitle">MQ-2 Smoke</h2>
+        </div>
+        <span id="soloSensorStatus" class="status-badge status-badge--safe">SAFE</span>
+      </div>
+      <div class="solo-stats">
+        <div><span>Current</span><strong id="soloCurrent">--</strong></div>
+        <div><span>Lowest</span><strong id="soloMin">--</strong></div>
+        <div><span>Highest</span><strong id="soloMax">--</strong></div>
+        <div><span>Average</span><strong id="soloAvg">--</strong></div>
+      </div>
+      <div class="solo-chart-container">
+        <canvas id="soloSensorChart" aria-label="Solo sensor history chart"></canvas>
+      </div>
+      <div class="solo-ai">
+        <span>Reading Summary</span>
+        <p id="soloSuggestion">Loading recent sensor history...</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="calibrationOverlay" class="calibration-overlay" aria-live="polite">
+    <div class="calibration-card glass-panel">
+      <div>
+        <span class="calibration-card__eyebrow">SENSOR CALIBRATION</span>
+        <h2>Stabilizing MQ Gas Sensors</h2>
+        <p>Stabilizing gas sensors for accurate baseline generation.</p>
+      </div>
+      <div class="calibration-card__content">
+        <div class="progress-ring progress-ring--calibration" style="--progress: 0">
+          <span id="calibrationCountdown">200s</span>
+        </div>
+        <div class="calibration-card__meta">
+          <div><span>Remaining Time</span><strong id="calibrationRemaining">200s</strong></div>
+          <div><span>Progress</span><strong id="calibrationProgress">0%</strong></div>
+          <div><span>Estimated Completion</span><strong id="calibrationEta">--:--:--</strong></div>
+          <div><span>Elapsed Time</span><strong id="calibrationElapsed">0s</strong></div>
+          <div><span>Arduino</span><strong id="calibrationArduino">--</strong></div>
+          <div><span>Database</span><strong id="calibrationDatabase">--</strong></div>
+        </div>
+      </div>
+      <div class="boot-bar"><div id="calibrationBarFill" class="boot-bar__fill"></div></div>
+    </div>
+  </section>
+
+  <section id="offlineOverlay" class="offline-overlay offline-overlay--hidden" aria-live="assertive">
+    <div class="offline-card glass-panel">
+      <span class="offline-card__eyebrow">EDUSENSE CONNECTION</span>
+      <h2>EDUSENSE device Wi-Fi is not connected</h2>
+      <p>The dashboard cannot reach the Raspberry Pi web service. Reconnect to <strong>edusense-device</strong> or verify the Pi is powered and running.</p>
+      <div class="offline-card__actions">
+        <span>Try: http://10.42.0.1</span>
+        <span>or: http://edusense.local</span>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

@@ -1,76 +1,86 @@
 # EDUSENSE ATL — Cloud-Supported Classroom Monitoring
 
 [![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-Open-16d9e8?style=for-the-badge)](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
-![Status](https://img.shields.io/badge/Project-Active-18d976?style=flat-square)
-![Platform](https://img.shields.io/badge/Platform-Raspberry%20Pi%20%2B%20Arduino-cyan?style=flat-square)
+![Python](https://img.shields.io/badge/Python-Raspberry%20Pi-3776AB?logo=python&logoColor=white)
+![Tests](https://img.shields.io/badge/Regression%20Tests-5%20Passing-18d976)
 
-**EDUSENSE ATL** is a smart-classroom environmental monitoring project designed to turn sensor readings into clear, useful information for healthier and more responsive learning spaces.
+**EDUSENSE ATL** is a smart-classroom environmental monitoring system that combines an Arduino sensor layer, Raspberry Pi intelligence, local storage, safety classification, and an outbound-only cloud connection.
 
 ## Live Website
 
 ### [Open the EDUSENSE AI dashboard](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
 
-The public website presents the cloud-connected side of EDUSENSE. It provides a focused dashboard for viewing classroom conditions, device connectivity, safety status, historical trends, and system recommendations.
+The public website presents classroom conditions, device connectivity, safety state, historical trends, calibration progress, and recommendations. Cloudflare implementation details and private account configuration are not included in this repository.
 
-> This repository currently documents the public website only. Cloudflare source code, credentials, databases, device secrets, and private configuration are intentionally excluded.
-
-## Website Highlights
-
-- Live classroom environment dashboard
-- Overall state and device-connection indicators
-- Temperature and humidity monitoring
-- MQ-series gas sensor readings
-- Sensor calibration progress and status
-- Live and historical environmental analytics
-- Time-range and sensor-category controls
-- AI-style safety recommendations
-- Stored-reading and previous-session summaries
-- Responsive interface for desktop and mobile
-- Export-oriented controls for reviewing collected information
-
-## System Concept
+## Architecture
 
 ```mermaid
 flowchart LR
-    Sensors[Classroom sensors] --> Arduino[Arduino]
-    Arduino --> Pi[Raspberry Pi]
-    Pi --> Cloud[Cloud connection]
-    Cloud --> Dashboard[EDUSENSE dashboard]
+    Sensors[Environmental sensors] --> Arduino[Arduino]
+    Arduino -->|Serial packets| Pi[Raspberry Pi]
+    Pi --> Engine[Calibration and safety engine]
+    Engine --> DB[(Local SQLite)]
+    Engine --> Local[Local dashboard]
+    DB --> Sync[Outbound cloud sync]
+    Sync --> Web[Public dashboard]
 ```
 
-The Arduino gathers raw environmental measurements. The Raspberry Pi processes and manages the readings, evaluates system state, and acts as the bridge to the cloud-supported dashboard.
+## Raspberry Pi Features
+
+- Validates and normalizes incoming Arduino packets
+- Manages MQ sensor calibration and rolling baselines
+- Converts retained raw ADC readings into estimated PPM values
+- Classifies conditions as CALIBRATING, SAFE, ELEVATED, WARNING, or DANGER
+- Rejects isolated spikes while detecting sustained rises
+- Stores readings and system state locally in SQLite
+- Serves a responsive local Flask dashboard
+- Provides live, historical, calendar, custom-range, and export APIs
+- Sends batched telemetry to the cloud using outbound HTTPS only
+- Supports secure device enrollment and a local Wi-Fi setup portal
+- Tracks Pi CPU temperature, CPU, RAM, disk, serial, Arduino, and cloud status
+- Generates recommendations with deterministic fallback and optional AI providers
+
+## Repository Layout
+
+```text
+raspberry-pi/
+├── src/          Core Python application
+├── web/          Local dashboard interface
+├── tests/        Regression tests
+└── requirements.txt
+cloud/            Public cloud overview only
+docs/             Architecture and logic documentation
+libraries/        Dependency overview
+arduino/          Reserved for verified Arduino firmware
+```
 
 ## Documentation
 
-Read the detailed [website overview](docs/website-overview.md).
+- [Raspberry Pi setup and modules](raspberry-pi/README.md)
+- [Complete Pi logic and data flow](docs/pi-logic.md)
+- [Website overview](docs/website-overview.md)
+- [Cloud overview](cloud/README.md)
+- [Library overview](libraries/README.md)
 
-## Repository Roadmap
+## Verification
 
-This repository will be expanded in stages:
+The supplied code passed:
 
-- `raspberry-pi/` — Pi application and setup documentation
-- `arduino/` — Arduino firmware and wiring notes
-- `cloud/` — public cloud architecture overview only
-- `docs/` — architecture, workflow, setup, and device-connection guides
-- `libraries/` — dependency and library overview
-- `screenshots/` — approved project images
+- Python compilation for every uploaded module
+- 5 regression tests covering PPM/API shape, CSV fields, two-hour history, full database history, and spike rejection versus sustained escalation
+- Secret-pattern scan
 
-## Security and Privacy
+## Security
 
-The public repository will not contain:
+Excluded from this public repository:
 
-- Wi-Fi names or passwords
-- API tokens or OAuth credentials
-- Cloudflare secrets or private bindings
-- Device-secret files
-- Local databases or classroom records
-- Private environment files
-- Personal information
+- SQLite databases and classroom records
+- Wi-Fi credentials
+- device credential files and enrollment tokens
+- API keys and OAuth secrets
+- Cloudflare source code and private bindings
+- old dashboard screenshots, exports, caches, and compiled files
 
 ## Current Status
 
-Website overview published. Raspberry Pi, Arduino, architecture, and connection documentation will be added after the verified project files are supplied and security-checked.
-
----
-
-Created by **Ojas Prem** as an ATL smart-classroom environmental monitoring project.
+The Raspberry Pi application and its local dashboard are published. The Arduino folder will be added only after verified firmware is supplied.

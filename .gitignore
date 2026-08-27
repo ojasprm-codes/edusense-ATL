@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Runtime data
+*.db
+*.db-shm
+*.db-wal
+exports/
+logs/
+
+# Credentials and private configuration
+.env
+.env.*
+!.env.example
+device.json
+*credentials*
+*secret*
+*.pem
+*.key
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
