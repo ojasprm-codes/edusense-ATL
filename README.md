@@ -40,6 +40,16 @@ flowchart LR
 - Tracks Pi CPU temperature, CPU, RAM, disk, serial, Arduino, and cloud status
 - Generates recommendations with deterministic fallback and optional AI providers
 
+## Arduino Features
+
+- Reads DHT22 and six MQ sensor channels
+- Sends a complete serial packet every second at 9600 baud
+- Rejects partial packets when DHT data is invalid
+- Keeps LED and buzzer disabled for the first 200 seconds
+- Receives Pi-authoritative SAFE, ELEVATED, WARNING and DANGER commands
+- Drives green, cyan/blue, amber and red status colours
+- Provides intermittent WARNING and continuous DANGER buzzer patterns
+
 ## Repository Layout
 
 ```text
@@ -48,14 +58,15 @@ raspberry-pi/
 ├── web/          Local dashboard interface
 ├── tests/        Regression tests
 └── requirements.txt
+arduino/          Uno reference firmware and execution guide
 cloud/            Public cloud overview only
 docs/             Architecture and logic documentation
 libraries/        Dependency overview
-arduino/          Reserved for verified Arduino firmware
 ```
 
 ## Documentation
 
+- [Arduino firmware, wiring and upload guide](arduino/README.md)
 - [Raspberry Pi setup and modules](raspberry-pi/README.md)
 - [Complete Pi logic and data flow](docs/pi-logic.md)
 - [Website overview](docs/website-overview.md)
@@ -64,23 +75,17 @@ arduino/          Reserved for verified Arduino firmware
 
 ## Verification
 
-The supplied code passed:
+- All uploaded Python modules compile
+- 5 supplied Raspberry Pi regression tests pass
+- Arduino source matches the documented pin map, packet protocol, warm-up lockout and command table
+- Public-tree and secret-pattern scans completed successfully
 
-- Python compilation for every uploaded module
-- 5 regression tests covering PPM/API shape, CSV fields, two-hour history, full database history, and spike rejection versus sustained escalation
-- Secret-pattern scan
+## Security and Safety
 
-## Security
+Databases, records, credentials, Wi-Fi passwords, enrollment tokens, Cloudflare source, private bindings, old screenshots, exports and caches are excluded.
 
-Excluded from this public repository:
-
-- SQLite databases and classroom records
-- Wi-Fi credentials
-- device credential files and enrollment tokens
-- API keys and OAuth secrets
-- Cloudflare source code and private bindings
-- old dashboard screenshots, exports, caches, and compiled files
+MQ/PPM results are estimates unless calibrated with certified reference gases. EDUSENSE must not replace certified fire, carbon-monoxide, gas, or emergency safety equipment.
 
 ## Current Status
 
-The Raspberry Pi application and its local dashboard are published. The Arduino folder will be added only after verified firmware is supplied.
+The Raspberry Pi application, local dashboard, Arduino Uno reference firmware, cloud overview, and full technical documentation are published.
