@@ -1,6 +1,6 @@
 # EDUSENSE ATL — Cloud-Supported Classroom Monitoring
 
-[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-Open-16d9e8?style=for-the-badge)](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
+[![Live Website](https://img.shields.io/badge/Live%20Website-Open-16d9e8?style=for-the-badge)](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
 ![Python](https://img.shields.io/badge/Python-Raspberry%20Pi-3776AB?logo=python&logoColor=white)
 ![Tests](https://img.shields.io/badge/Regression%20Tests-5%20Passing-18d976)
 
@@ -8,9 +8,19 @@
 
 ## Live Website
 
-### [Open the EDUSENSE AI dashboard](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
+### [Open the EDUSENSE AI website](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
 
-The public website presents classroom conditions, device connectivity, safety state, historical trends, calibration progress, and recommendations. Cloudflare implementation details and private account configuration are not included in this repository.
+![EDUSENSE AI public website preview](website/images/edusense-ai-site-preview.png)
+
+The current website explains the product for teachers, school leaders, and families; demonstrates the Arduino–Pi–cloud architecture; provides a sanitized interactive sensor explorer; explains calibration and safety states; and includes pilot, support, FAQ, and contact sections.
+
+[Read the complete website feature walkthrough](docs/website-overview.md)
+
+### Current V7 dashboard interface
+
+![Current EDUSENSE V7 dashboard interface](website/images/edusense-v7-dashboard.png)
+
+This is the current V7 interface included by the live website. Earlier uploaded dashboard screenshots remain excluded. The public demo uses fixed sample data and cannot access or control a real classroom device.
 
 ## Architecture
 
@@ -22,7 +32,7 @@ flowchart LR
     Engine --> DB[(Local SQLite)]
     Engine --> Local[Local dashboard]
     DB --> Sync[Outbound cloud sync]
-    Sync --> Web[Public dashboard]
+    Sync --> Web[Public website and portal]
 ```
 
 ## Raspberry Pi Features
@@ -59,6 +69,7 @@ raspberry-pi/
 ├── tests/        Regression tests
 └── requirements.txt
 arduino/          Uno reference firmware and execution guide
+website/          Current public website preview images
 cloud/            Public cloud overview only
 docs/             Architecture and logic documentation
 libraries/        Dependency overview
@@ -66,10 +77,10 @@ libraries/        Dependency overview
 
 ## Documentation
 
+- [Website preview and full feature walkthrough](docs/website-overview.md)
 - [Arduino firmware, wiring and upload guide](arduino/README.md)
 - [Raspberry Pi setup and modules](raspberry-pi/README.md)
 - [Complete Pi logic and data flow](docs/pi-logic.md)
-- [Website overview](docs/website-overview.md)
 - [Cloud overview](cloud/README.md)
 - [Library overview](libraries/README.md)
 
@@ -88,4 +99,4 @@ MQ/PPM results are estimates unless calibrated with certified reference gases. E
 
 ## Current Status
 
-The Raspberry Pi application, local dashboard, Arduino Uno reference firmware, cloud overview, and full technical documentation are published.
+The Raspberry Pi application, local dashboard, Arduino Uno reference firmware, current website previews, website feature documentation, cloud overview, and technical documentation are published.

@@ -1,66 +1,109 @@
-# EDUSENSE AI Website Overview
+# EDUSENSE AI Website — Current Feature Walkthrough
 
-## Purpose
+## Live links
 
-The EDUSENSE AI website is the visual monitoring layer of the project. It converts raw classroom sensor data into a clear dashboard that can be understood quickly without reading serial output or database records.
+- [Open the EDUSENSE AI public website](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
+- [Open the EDUSENSE cloud portal](https://edusense-cloud.ojasprm.workers.dev/portal)
 
-## Live Dashboard
+The public website is the presentation and demonstration layer for EDUSENSE. It explains the product, shows how the Arduino, Raspberry Pi, and cloud layers work together, and provides a sanitized interactive dashboard demonstration. It does not expose Cloudflare source code, private endpoints, credentials, database contents, or device secrets.
 
-[Visit EDUSENSE AI](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
+## Current website preview
 
-## Main Dashboard Areas
+![EDUSENSE AI public website preview](../website/images/edusense-ai-site-preview.png)
 
-### System Status
+## Current EDUSENSE V7 interface
 
-The status row gives an immediate view of:
+![Current EDUSENSE V7 dashboard interface](../website/images/edusense-v7-dashboard.png)
 
-- Overall classroom condition
-- Raspberry Pi connectivity
-- Web dashboard availability
-- Arduino connection state
-- Time of the latest update
+The second image is the current V7 interface shown by the website itself. The older dashboard screenshots supplied earlier are intentionally excluded.
 
-### Environmental Sensor Cards
+## What visitors can explore
 
-Dedicated cards present the current values and state of:
+### Product introduction
 
-- Temperature
-- Humidity
-- MQ-2 smoke response
-- MQ-3 alcohol-vapour response
-- MQ-4 methane response
-- MQ-5 LPG response
-- MQ-7 carbon-monoxide response
-- MQ-8 hydrogen response
+The hero introduces the goal: **“See the room. Protect the learning.”** It presents EDUSENSE as a local-first environmental intelligence system for schools. The opening trust points emphasize privacy by design, local processing, and real-time response.
 
-The interface separates a numeric reading from its interpretation, making it easier to distinguish normal operation, calibration, warning conditions, and missing-device states.
+The website highlights these system facts:
 
-### Calibration Experience
+| Capability | Website explanation |
+| --- | --- |
+| Sensor interval | One complete sensor packet per second |
+| Gas channels | Six MQ channels: MQ-2, MQ-3, MQ-4, MQ-5, MQ-7, and MQ-8 |
+| Safety model | SAFE, ELEVATED, WARNING, and DANGER |
+| Processing | Decisions are made locally by the Raspberry Pi |
 
-EDUSENSE includes a guided calibration state for MQ gas sensors. The website can display remaining time, progress, estimated completion, elapsed time, Arduino reconnection state, and database availability while the system establishes a stable reference.
+### Product capabilities
 
-### Live Environment Analytics
+Four feature cards explain the core value:
 
-The analytics area supports reviewing environmental behaviour instead of showing only one instant reading. Its interface includes multiple time windows, date-oriented controls, sensor selection, and summary information for stored readings and previous sessions.
+- **Continuous sensing:** classroom conditions are sampled continuously instead of relying on occasional manual checks.
+- **Baseline-aware checks:** MQ readings are interpreted against calibration baselines rather than treated as universal values.
+- **Actionable response:** safety states are translated into understandable guidance and physical LED/buzzer commands.
+- **Evidence over time:** stored readings and trends help schools review environmental behaviour instead of seeing only one instant value.
 
-### Recommendations
+### Views for different school users
 
-The recommendation panel translates system state into concise guidance. During calibration it explains why readings are not yet ready; during normal monitoring it is intended to provide clear next actions based on the available environmental data.
+An interactive audience selector changes the explanation for:
 
-### Responsive Design
+- **Teachers:** simple current condition and useful next steps.
+- **School leaders:** trends, evidence, and system status across the installation.
+- **Families:** clear, privacy-conscious communication about the classroom environment.
 
-The interface adapts from a wide desktop dashboard to a narrower mobile layout while retaining access to sensor cards, analytics controls, system state, and recommendations.
+### Sample campus overview
 
-## Data Flow
+The website contains a visual sample overview that demonstrates how room condition, connection state, and recent environmental information could be presented. It is illustrative and does not expose a real school deployment.
 
-1. Classroom sensors measure environmental conditions.
-2. Arduino collects the hardware readings.
-3. Raspberry Pi validates, processes, and stores device data.
-4. The Pi synchronizes approved information with the cloud-supported layer.
-5. The dashboard displays current state, history, and recommendations.
+### Technology explorer
 
-## Scope of This Repository
+Visitors can switch between three system layers:
 
-This repository documents what the website does and how it fits into EDUSENSE. It does not publish the Cloudflare implementation, private endpoints, account configuration, secrets, database contents, or device authentication details.
+| Layer | Responsibility |
+| --- | --- |
+| Arduino Uno | Reads DHT22 and MQ sensors, sends serial packets, and obeys Pi status commands |
+| Raspberry Pi | Validates readings, calibrates sensors, stores history, classifies safety, and controls outputs |
+| Cloud portal | Presents approved synchronized information without taking over local safety decisions |
 
-Device connection instructions will be added after the Raspberry Pi and Arduino source files are verified.
+The website also explains the operating sequence: **Sense → Transfer → Interpret → Respond**.
+
+### Calibration and safety explanation
+
+The site explains why MQ sensors require a warm-up and clean-air baseline before decisions are enabled. It also introduces the four operational states:
+
+- **SAFE:** readings remain within the learned normal range.
+- **ELEVATED:** a meaningful rise is present and should be watched.
+- **WARNING:** a sustained or stronger rise requires attention.
+- **DANGER:** the highest local alert state; the Pi commands the physical warning outputs.
+
+The Arduino does not calculate these states. The Raspberry Pi remains authoritative.
+
+### Interactive dashboard demonstration
+
+The demo uses fixed, sanitized sample data. Visitors can:
+
+- inspect temperature, humidity, and six gas channels;
+- switch among MQ-2 smoke, MQ-3 alcohol vapour, MQ-4 methane, MQ-5 LPG, MQ-7 carbon monoxide, and MQ-8 hydrogen;
+- change example time ranges such as LIVE, 2 hours, 1 day, and 20 days;
+- review status explanations, analytics, and recommended actions;
+- see how the interface responds on desktop and mobile layouts.
+
+The public demo is not connected to a real classroom, Raspberry Pi, Arduino, database, or safety equipment. Its controls cannot operate physical devices.
+
+### Pilot, support, and contact
+
+The website includes a pilot pathway, support information, frequently asked questions, and a contact form. Navigation links take visitors directly to Product, For Schools, Technology, Pilot, Demo, and Support sections. A compact mobile menu provides the same destinations on smaller screens.
+
+## Relationship to the repository
+
+| Part | Location |
+| --- | --- |
+| Raspberry Pi application and full decision logic | `raspberry-pi/src/` |
+| Local Raspberry Pi dashboard | `raspberry-pi/web/` |
+| Arduino Uno reference firmware | `arduino/` |
+| Website screenshots and public explanation | `website/` and this document |
+| Cloud public overview only | `cloud/` |
+
+The public website source is intentionally not copied into this repository. Only the live link, current authorized preview images, and a feature-level explanation are published.
+
+## Safety limitation
+
+MQ readings and converted PPM values are estimates unless the installation is calibrated with appropriate certified reference gases and sensor resistance models. EDUSENSE is an educational monitoring system and must not replace certified fire alarms, carbon-monoxide alarms, gas detectors, or emergency safety equipment.
