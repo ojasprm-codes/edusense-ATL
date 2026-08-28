@@ -37,8 +37,8 @@ dist/
 wrangler.jsonc
 .openai/
 
-# Arduino output
-build/
+# Arduino output (do not hide application source directories named build)
+arduino/**/build/
 *.hex
 *.elf
 
