@@ -7,15 +7,26 @@
 - Arduino connected over USB serial
 - NetworkManager and `nmcli` for the guided Wi-Fi setup flow
 
-## Install
+## Production install (recommended)
+
+From the cloned repository root on Raspberry Pi OS:
 
 ```bash
-cd raspberry-pi
+sudo bash raspberry-pi/deploy/install_edusense_v7.sh
+```
+
+This creates the virtual environment, persistent state directory, Nginx reverse
+proxy, setup hotspot and boot-managed systemd services. See the
+[complete deployment guide](../docs/DEPLOYMENT.md).
+
+## Manual development run
+
+```bash
+cd edusense-ATL/raspberry-pi
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cd src
-python app.py
+python src/app.py
 ```
 
 The local dashboard defaults to port `5000`. Serial defaults to `/dev/ttyACM0` at `9600` baud. These values can be overridden with environment variables.
@@ -59,6 +70,6 @@ Never commit the values of keys, Wi-Fi passwords, enrollment codes, or the gener
 ## Test
 
 ```bash
-cd raspberry-pi/src
-PYTHONPATH=. python -m unittest -v ../tests/test_v72_regressions.py
+cd raspberry-pi
+PYTHONPATH=src python -m unittest -v tests/test_v72_regressions.py
 ```

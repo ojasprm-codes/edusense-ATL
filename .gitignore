@@ -27,3 +27,23 @@ device.json
 Thumbs.db
 .vscode/
 .idea/
+
+# Node and Cloudflare build output
+node_modules/
+dist/
+.next/
+.wrangler/
+.dev.vars
+wrangler.jsonc
+.openai/
+
+# Arduino output
+build/
+*.hex
+*.elf
+
+# Runtime and generated files
+*.log
+*.tar.gz
+*.zip
+coverage/

@@ -1,0 +1,19 @@
+{
+  "name": "edusense-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc --noEmit",
+    "types": "wrangler types src/worker-configuration.d.ts",
+    "db:local": "wrangler d1 migrations apply edusense-cloud --local",
+    "db:remote": "wrangler d1 migrations apply edusense-cloud --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.92.0"
+  }
+}

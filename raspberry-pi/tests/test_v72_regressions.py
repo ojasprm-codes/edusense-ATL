@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 from database import DatabaseManager, READING_COLUMNS
+from command_sender import CommandSender
 from export_manager import ExportManager
 from history import RANGES
 from safety_engine import SafetyEngine
@@ -27,6 +28,23 @@ def packet(value: int) -> dict[str, float | int]:
 
 
 class UnitContractTests(unittest.TestCase):
+    def test_calibration_output_reset_does_not_send_safe_status(self) -> None:
+        class SerialStub:
+            def __init__(self) -> None:
+                self.commands: list[str] = []
+
+            def write_command(self, command: str) -> bool:
+                self.commands.append(command)
+                return True
+
+        serial = SerialStub()
+        sender = CommandSender(serial)
+        sender.last_sent_status = "DANGER"
+
+        self.assertTrue(sender.clear_outputs())
+        self.assertEqual(serial.commands, ["OUTPUTS:OFF"])
+        self.assertIsNone(sender.last_sent_status)
+
     def test_live_api_returns_estimated_ppm_and_retains_raw_adc(self) -> None:
         shaped = SensorProcessor._api_shape({**packet(253), "timestamp": "2026-01-01T00:00:00+00:00"})
         self.assertGreater(shaped["mq2"], 0)

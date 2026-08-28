@@ -1,0 +1,4 @@
+# Local development only. Copy to .dev.vars and supply your own values.
+SESSION_SECRET=replace-with-at-least-32-random-characters
+GOOGLE_CLIENT_ID=replace-with-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=replace-with-google-oauth-client-secret

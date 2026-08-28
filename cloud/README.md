@@ -19,9 +19,16 @@ sequenceDiagram
 
 The Raspberry Pi remains authoritative for local collection, calibration, safety classification, and storage. Network or cloud failures do not stop local processing.
 
-## Intentionally Excluded
+## Included source
 
-- Cloudflare Worker/Page source code
+The deployable Worker, D1 migrations, package lock, and a sanitized Wrangler
+configuration are in [`worker/`](worker/). Copy `wrangler.example.jsonc` to
+`wrangler.jsonc`, create a D1 database, replace the placeholder database ID,
+apply migrations, configure secrets, and deploy with Wrangler. See
+[`../docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) for the complete procedure.
+
+## Intentionally excluded
+
 - account identifiers and private bindings
 - databases and classroom telemetry
 - enrollment codes and device secrets

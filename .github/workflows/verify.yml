@@ -1,0 +1,54 @@
+name: Verify publication
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  raspberry-pi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -r raspberry-pi/requirements.txt
+      - run: python -m compileall -q raspberry-pi/src raspberry-pi/tests
+      - run: PYTHONPATH=raspberry-pi/src python -m unittest -v raspberry-pi/tests/test_v72_regressions.py
+      - run: bash -n raspberry-pi/deploy/*.sh
+
+  cloud-worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud/worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: cloud/worker/package-lock.json
+      - run: cp wrangler.example.jsonc wrangler.jsonc
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  public-website:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website/source
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+          cache-dependency-path: website/source/package-lock.json
+      - run: npm ci
+      - run: npm test

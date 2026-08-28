@@ -5,6 +5,7 @@ from __future__ import annotations
 import atexit
 from datetime import timedelta
 import os
+from pathlib import Path
 import platform
 import subprocess
 import time
@@ -47,7 +48,16 @@ except ImportError:
     psutil = None  # type: ignore
 
 
-app = Flask(__name__, template_folder=".", static_folder=".", static_url_path="")
+APP_DIR = Path(__file__).resolve().parent
+PUBLISHED_WEB_DIR = APP_DIR.parent / "web"
+WEB_DIR = PUBLISHED_WEB_DIR if PUBLISHED_WEB_DIR.is_dir() else APP_DIR
+
+app = Flask(
+    __name__,
+    template_folder=str(WEB_DIR),
+    static_folder=str(WEB_DIR),
+    static_url_path="",
+)
 api = Blueprint("api", __name__, url_prefix="/api")
 started_at = time.time()
 

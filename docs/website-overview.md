@@ -99,10 +99,10 @@ The website includes a pilot pathway, support information, frequently asked ques
 | Raspberry Pi application and full decision logic | `raspberry-pi/src/` |
 | Local Raspberry Pi dashboard | `raspberry-pi/web/` |
 | Arduino Uno reference firmware | `arduino/` |
-| Website screenshots and public explanation | `website/` and this document |
-| Cloud public overview only | `cloud/` |
+| Website source, screenshots and explanation | `website/` and this document |
+| Cloud Worker, D1 migrations and deployment guide | `cloud/worker/` and `cloud/README.md` |
 
-The public website source is intentionally not copied into this repository. Only the live link, current authorized preview images, and a feature-level explanation are published.
+The current public website source is published under `website/source/`. Account-specific hosting metadata, generated builds, dependencies, secrets, telemetry and private deployment bindings remain excluded.
 
 ## Safety limitation
 

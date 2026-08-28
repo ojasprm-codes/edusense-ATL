@@ -1,102 +1,147 @@
-# EDUSENSE ATL — Cloud-Supported Classroom Monitoring
+# EDUSENSE AI - Smart Classroom Environmental Monitoring
 
-[![Live Website](https://img.shields.io/badge/Live%20Website-Open-16d9e8?style=for-the-badge)](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
-![Python](https://img.shields.io/badge/Python-Raspberry%20Pi-3776AB?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/Regression%20Tests-5%20Passing-18d976)
+[![Live website](https://img.shields.io/badge/Live_website-Open-079db7?style=for-the-badge)](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
+[![Python tests](https://img.shields.io/badge/Python_tests-6_passing-17a673)](#verification)
+[![Hardware](https://img.shields.io/badge/Hardware-Arduino_Uno_%2B_Raspberry_Pi-CB334B)](#hardware)
 
-**EDUSENSE ATL** is a smart-classroom environmental monitoring system that combines an Arduino sensor layer, Raspberry Pi intelligence, local storage, safety classification, and an outbound-only cloud connection.
+EDUSENSE AI is an ATL smart-classroom project that records temperature,
+humidity, and six MQ sensor channels, learns a local clean-air baseline, stores
+history on a Raspberry Pi, and presents current and historical information on a
+local dashboard and an authenticated cloud portal.
 
-## Live Website
+This repository is the publication-ready project record. It contains the real
+Raspberry Pi application, Arduino reference firmware, Pi installer, Cloudflare
+Worker/D1 source, public website source, tests, and documentation. Runtime
+databases, credentials, school Wi-Fi details, API keys, enrollment tokens, and
+account-specific deployment files are deliberately excluded.
 
-### [Open the EDUSENSE AI website](https://edusense-ai-schools.ojas-premt2.chatgpt.site)
+> EDUSENSE is an educational environmental monitor, not a certified fire,
+> carbon-monoxide, gas, or life-safety instrument. MQ concentration values are
+> estimates unless the installation is calibrated with certified reference gas
+> and the complete sensor-resistance model.
 
-![EDUSENSE AI public website preview](website/images/edusense-ai-site-preview.png)
+## What is real and what is illustrative
 
-The current website explains the product for teachers, school leaders, and families; demonstrates the Arduino–Pi–cloud architecture; provides a sanitized interactive sensor explorer; explains calibration and safety states; and includes pilot, support, FAQ, and contact sections.
+- The code, serial protocol, database schema, safety engine, exports, installer,
+  cloud API, authentication flow, and regression tests are real project files.
+- Repository screenshots are captures of the current EDUSENSE interfaces.
+- The public website's classroom scene is an illustrative design asset, not a
+  photograph of a deployed classroom.
+- The public website demo uses labelled sample data and cannot control hardware.
+- No claim in this repository represents an ATL prototype as a certified product.
 
-[Read the complete website feature walkthrough](docs/website-overview.md)
+See [Evidence and asset provenance](docs/EVIDENCE_AND_PROVENANCE.md).
 
-### Current V7 dashboard interface
-
-![Current EDUSENSE V7 dashboard interface](website/images/edusense-v7-dashboard.png)
-
-This is the current V7 interface included by the live website. Earlier uploaded dashboard screenshots remain excluded. The public demo uses fixed sample data and cannot access or control a real classroom device.
-
-## Architecture
+## System architecture
 
 ```mermaid
 flowchart LR
-    Sensors[Environmental sensors] --> Arduino[Arduino]
-    Arduino -->|Serial packets| Pi[Raspberry Pi]
-    Pi --> Engine[Calibration and safety engine]
-    Engine --> DB[(Local SQLite)]
-    Engine --> Local[Local dashboard]
-    DB --> Sync[Outbound cloud sync]
-    Sync --> Web[Public website and portal]
+    DHT[DHT22] --> UNO[Arduino Uno R3]
+    MQ[MQ2, MQ3, MQ4, MQ5, MQ7, MQ8] --> UNO
+    UNO -->|One ordered packet per second| PI[Raspberry Pi]
+    PI --> CAL[200-second calibration]
+    CAL --> SAFE[Adaptive safety engine]
+    SAFE --> DB[(SQLite history)]
+    SAFE --> UI[Local Flask dashboard]
+    SAFE -->|STATUS command| UNO
+    UNO --> RGB[RGB LED and buzzer]
+    DB -->|Outbound HTTPS batches| CF[Cloudflare Worker and D1]
+    CF --> PORTAL[Authenticated school portal]
 ```
 
-## Raspberry Pi Features
+The Pi remains authoritative even when the internet is unavailable. The browser
+never calculates status and the cloud never directly controls the classroom LED
+or buzzer.
 
-- Validates and normalizes incoming Arduino packets
-- Manages MQ sensor calibration and rolling baselines
-- Converts retained raw ADC readings into estimated PPM values
-- Classifies conditions as CALIBRATING, SAFE, ELEVATED, WARNING, or DANGER
-- Rejects isolated spikes while detecting sustained rises
-- Stores readings and system state locally in SQLite
-- Serves a responsive local Flask dashboard
-- Provides live, historical, calendar, custom-range, and export APIs
-- Sends batched telemetry to the cloud using outbound HTTPS only
-- Supports secure device enrollment and a local Wi-Fi setup portal
-- Tracks Pi CPU temperature, CPU, RAM, disk, serial, Arduino, and cloud status
-- Generates recommendations with deterministic fallback and optional AI providers
+## Hardware
 
-## Arduino Features
+| Component | Connection |
+|---|---|
+| DHT22 | Arduino D2 |
+| MQ2 | A0 |
+| MQ3 | A4 |
+| MQ4 | A5 |
+| MQ5 | A1 |
+| MQ7 | A2 |
+| MQ8 | A3 |
+| Reference RGB LED | D9, D10, D11 |
+| Reference buzzer | D8 |
+| Arduino to Pi | USB serial, 9600 baud |
 
-- Reads DHT22 and six MQ sensor channels
-- Sends a complete serial packet every second at 9600 baud
-- Rejects partial packets when DHT data is invalid
-- Keeps LED and buzzer disabled for the first 200 seconds
-- Receives Pi-authoritative SAFE, ELEVATED, WARNING and DANGER commands
-- Drives green, cyan/blue, amber and red status colours
-- Provides intermittent WARNING and continuous DANGER buzzer patterns
+The MQ pin map is from the project hardware specification. The published LED
+and buzzer assignments belong to the V7 reference firmware and must be checked
+against the physical prototype before flashing.
 
-## Repository Layout
+## Core behaviour
+
+1. Arduino reads all sensors and emits one complete packet per second.
+2. Pi validates packet order and value ranges.
+3. Every reading is stored during the mandatory 200-second calibration.
+4. Calibration builds an initial average baseline for each MQ channel.
+5. The safety engine filters noise and evaluates relative rise, rate of rise,
+   absolute guardrails, persistence, and multi-sensor evidence.
+6. The Pi produces CALIBRATING, SAFE, ELEVATED, WARNING, or DANGER.
+7. Only after calibration, the Pi sends a status command to the Arduino.
+8. SQLite preserves readings and pending cloud uploads across restarts.
+9. The cloud client retries outbound batches without stopping local monitoring.
+
+## Repository layout
 
 ```text
-raspberry-pi/
-├── src/          Core Python application
-├── web/          Local dashboard interface
-├── tests/        Regression tests
-└── requirements.txt
-arduino/          Uno reference firmware and execution guide
-website/          Current public website preview images
-cloud/            Public cloud overview only
-docs/             Architecture and logic documentation
-libraries/        Dependency overview
+arduino/                 Arduino Uno V7 reference firmware and upload guide
+raspberry-pi/src/        Flask backend, database, safety and synchronization
+raspberry-pi/web/        Current local dashboard and offline Chart.js asset
+raspberry-pi/tests/      Six regression tests
+raspberry-pi/deploy/     Raspberry Pi OS installer and service helpers
+cloud/worker/            Cloudflare Worker, D1 migrations and sanitized config
+website/source/          Current public EDUSENSE website source and tests
+website/images/          Captures of the current interfaces
+docs/                    Architecture, journey, deployment and verification
 ```
 
-## Documentation
+## Start here
 
-- [Website preview and full feature walkthrough](docs/website-overview.md)
-- [Arduino firmware, wiring and upload guide](arduino/README.md)
-- [Raspberry Pi setup and modules](raspberry-pi/README.md)
-- [Complete Pi logic and data flow](docs/pi-logic.md)
-- [Cloud overview](cloud/README.md)
-- [Library overview](libraries/README.md)
+- [Complete deployment guide](docs/DEPLOYMENT.md)
+- [Architecture and data flow](docs/ARCHITECTURE.md)
+- [Project journey: prototype to V7](docs/PROJECT_JOURNEY.md)
+- [Raspberry Pi module guide](raspberry-pi/README.md)
+- [Arduino firmware guide](arduino/README.md)
+- [Cloud Worker deployment](cloud/README.md)
+- [Public website guide](website/README.md)
+- [Verification record](docs/VERIFICATION.md)
+- [Third-party software notices](docs/THIRD_PARTY_NOTICES.md)
+- [Security policy](SECURITY.md)
 
 ## Verification
 
-- All uploaded Python modules compile
-- 5 supplied Raspberry Pi regression tests pass
-- Arduino source matches the documented pin map, packet protocol, warm-up lockout and command table
-- Public-tree and secret-pattern scans completed successfully
+Verified locally from the publication tree:
 
-## Security and Safety
+- All published Python modules compile.
+- Six Raspberry Pi regression tests pass.
+- The two-hour history contract permits all 7,200 one-second readings.
+- A single 600 ADC spike is rejected while a sustained rise escalates.
+- Calibration output reset sends `OUTPUTS:OFF`, not `STATUS:SAFE`.
+- Cloud Worker TypeScript type-check and dry-run build complete.
+- Public website production build and rendered-route tests complete.
+- Secret-pattern and forbidden-runtime-file scans complete before publication.
 
-Databases, records, credentials, Wi-Fi passwords, enrollment tokens, Cloudflare source, private bindings, old screenshots, exports and caches are excluded.
+Exact commands and any tooling limits are recorded in
+[docs/VERIFICATION.md](docs/VERIFICATION.md).
 
-MQ/PPM results are estimates unless calibrated with certified reference gases. EDUSENSE must not replace certified fire, carbon-monoxide, gas, or emergency safety equipment.
+## Current interfaces
 
-## Current Status
+### Public website
 
-The Raspberry Pi application, local dashboard, Arduino Uno reference firmware, current website previews, website feature documentation, cloud overview, and technical documentation are published.
+![Current EDUSENSE AI website](website/images/edusense-ai-site-preview.png)
+
+### Raspberry Pi classroom dashboard
+
+![Current EDUSENSE V7 dashboard](website/images/edusense-v7-dashboard.png)
+
+## Responsible deployment
+
+Before classroom use, verify the power budget, sensor module output voltage,
+common ground, RGB resistors, buzzer driver, enclosure airflow, cable strain
+relief, serial reliability, local emergency procedures, and comparison against
+appropriate reference instruments. Never use EDUSENSE as the sole basis for an
+evacuation or all-clear decision.

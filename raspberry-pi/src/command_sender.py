@@ -38,6 +38,6 @@ class CommandSender:
         self.last_sent_status = None
 
     def clear_outputs(self) -> bool:
-        """Force Arduino LED/buzzer outputs back to the safe state after reconnect."""
+        """Force outputs off without issuing an environmental status decision."""
         self.last_sent_status = None
-        return self.send_status("SAFE", force=True)
+        return self.serial_reader.write_command("OUTPUTS:OFF")
